@@ -39,6 +39,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
 
+    // 打开新标签页（content script 请求，如打开历史图表）
+    if (request.action === 'openTab') {
+        chrome.tabs.create({ url: request.url });
+        sendResponse({ success: true });
+        return true;
+    }
+
     if (request.action === 'refreshAllPrices') {
         refreshAllPrices()
             .then(sendResponse)
