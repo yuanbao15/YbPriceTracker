@@ -14,7 +14,7 @@ class PriceHistory {
                 originalPrice,
                 couponInfo ? JSON.stringify(couponInfo) : null,
                 promotionInfo ? JSON.stringify(promotionInfo) : null,
-                recordedAt || null
+                recordedAt || new Date()
             ]
         );
         return result.insertId;
