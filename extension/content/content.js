@@ -618,17 +618,21 @@
     // 显示价格历史徽章
     async function showPriceHistoryBadge() {
         try {
+            console.log(`[YbPriceTracker] 查询商品: platform=${currentPlatform}, product_id=${currentProductId}`);
             const response = await fetch(`http://localhost:3777/api/products?platform=${currentPlatform}&product_id=${currentProductId}`);
             const data = await response.json();
-            
+
             if (data.success && data.data.length > 0) {
                 const product = data.data[0];
+                console.log(`[YbPriceTracker] 查到商品: id=${product.id}, title=${product.title}, price=${product.current_price}`);
                 injectPriceBadge(product);
                 // 已在追踪列表中：把当前页面实时价格上报后端，丰富历史数据
                 reportCurrentPriceToBackend(product.id);
+            } else {
+                console.log(`[YbPriceTracker] 未找到商品或不在追踪列表中`);
             }
         } catch (error) {
-            // 静默处理
+            console.warn('[YbPriceTracker] 查询商品失败:', error);
         }
     }
     

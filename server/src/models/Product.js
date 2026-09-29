@@ -11,6 +11,11 @@ class Product {
             params.push(filters.platform);
         }
 
+        if (filters.product_id) {
+            query += ' AND product_id = ?';
+            params.push(filters.product_id);
+        }
+
         if (filters.status) {
             query += ' AND status = ?';
             params.push(filters.status);

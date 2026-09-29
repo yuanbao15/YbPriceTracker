@@ -50,6 +50,7 @@ const productController = {
         try {
             const filters = {
                 platform: req.query.platform,
+                product_id: req.query.product_id,
                 status: req.query.status,
                 desire_level: req.query.desire_level ? parseInt(req.query.desire_level) : undefined,
                 search: req.query.search,

@@ -46,6 +46,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
 
+    // 关闭当前标签页（charts.html 返回按钮请求）
+    if (request.action === 'closeTab') {
+        if (sender.tab && sender.tab.id) {
+            chrome.tabs.remove(sender.tab.id);
+            sendResponse({ success: true });
+        } else {
+            sendResponse({ success: false, error: 'No tab id' });
+        }
+        return true;
+    }
+
     if (request.action === 'refreshAllPrices') {
         refreshAllPrices()
             .then(sendResponse)

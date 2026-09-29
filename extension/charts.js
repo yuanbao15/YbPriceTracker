@@ -25,6 +25,21 @@ document.addEventListener('DOMContentLoaded', () => {
         mmbLink.style.display = '';
     }
 
+    // 绑定返回按钮
+    const backBtn = document.getElementById('back-btn');
+    if (backBtn) {
+        backBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            // 请求 background 关闭当前标签页
+            chrome.runtime.sendMessage({ action: 'closeTab' }, () => {
+                // 如果消息发送失败，尝试历史后退
+                if (chrome.runtime.lastError) {
+                    window.history.back();
+                }
+            });
+        });
+    }
+
     // 绑定时间范围按钮事件
     document.querySelectorAll('.control-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -102,6 +117,18 @@ function updatePriceSummary(stats, history) {
         stats.max_price ? `¥${parseFloat(stats.max_price).toFixed(2)}` : '--';
     document.getElementById('avg-price').textContent =
         stats.avg_price ? `¥${parseFloat(stats.avg_price).toFixed(2)}` : '--';
+
+    // 显示数据时间范围提示
+    if (stats.first_record && stats.last_record) {
+        const first = new Date(stats.first_record);
+        const last = new Date(stats.last_record);
+        const days = Math.ceil((last - first) / (1000 * 60 * 60 * 24));
+        const hint = document.getElementById('data-hint');
+        if (hint) {
+            hint.textContent = `📊 ${history.length} 条记录，覆盖 ${days} 天（${first.toLocaleDateString('zh-CN')} ~ ${last.toLocaleDateString('zh-CN')}）`;
+            hint.style.display = '';
+        }
+    }
 }
 
 // 渲染图表
