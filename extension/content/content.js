@@ -711,7 +711,7 @@
                 const product = window.__ybprice_product__;
                 if (product) {
                     const chartsUrl = chrome.runtime.getURL('charts.html') + '?productId=' + product.id + '&title=' + encodeURIComponent(product.title || '') + '&url=' + encodeURIComponent(product.url || '');
-                    window.open(chartsUrl, '_blank');
+                    chrome.runtime.sendMessage({ action: 'openTab', url: chartsUrl });
                 }
             });
         }
