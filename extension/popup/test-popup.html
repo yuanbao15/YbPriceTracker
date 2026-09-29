@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YbPriceTracker 测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .test-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .test-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .result {
+            background: #f9f9f9;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 12px;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .success {
+            color: #52c41a;
+            background: #e6f9e6;
+        }
+
+        .error {
+            color: #ff4d4f;
+            background: #ffe8e8;
+        }
+
+        .info {
+            color: #1890ff;
+            background: #e8f4fd;
+        }
+
+        .links {
+            margin-top: 20px;
+        }
+
+        .links a {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .links a:hover {
+            background: #5a6fd6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 YbPriceTracker 功能测试</h1>
+
+        <div class="section">
+            <h2 class="section-title">后端服务测试</h2>
+            <button class="test-btn" onclick="testHealth()">测试健康检查</button>
+            <button class="test-btn" onclick="testAddProduct()">测试添加商品</button>
+            <button class="test-btn" onclick="testGetProducts()">测试获取商品</button>
+            <button class="test-btn" onclick="testScrape()">测试手动抓取</button>
+            <div id="backend-result" class="result"></div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">功能演示</h2>
+            <p style="margin-bottom: 12px; color: #666;">
+                点击下方按钮打开扩展弹出窗口，测试完整功能
+            </p>
+            <button class="test-btn" onclick="openPopup()">打开扩展弹窗</button>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">快速链接</h2>
+            <div class="links">
+                <a href="http://localhost:3777" target="_blank">后端服务主页</a>
+                <a href="http://localhost:3777/api/health" target="_blank">健康检查 API</a>
+                <a href="http://localhost:3777/api/products" target="_blank">商品列表 API</a>
+                <a href="http://localhost:3777/api/products/stats" target="_blank">统计信息 API</a>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">测试数据</h2>
+            <button class="test-btn" onclick="loadTestData()">加载测试数据</button>
+            <button class="test-btn" onclick="clearTestData()">清除测试数据</button>
+            <div id="test-data-result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3777/api';
+
+        // 显示结果
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `result ${type}`;
+            element.textContent = message;
+        }
+
+        // 测试健康检查
+        async function testHealth() {
+            try {
+                showResult('backend-result', '正在测试...', 'info');
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                showResult('backend-result', JSON.stringify(data, null, 2), 'success');
+            } catch (error) {
+                showResult('backend-result', `错误: ${error.message}\n\n请确保后端服务正在运行\n运行命令: cd server && npm run dev`, 'error');
+            }
+        }
+
+        // 测试添加商品
+        async function testAddProduct() {
+            try {
+                showResult('backend-result', '正在添加测试商品...', 'info');
+                const response = await fetch(`${API_BASE}/products`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        platform: 'jd',
+                        product_id: '100012345678',
+                        title: '测试商品 - iPhone 15 Pro',
+                        url: 'https://item.jd.com/100012345678.html',
+                        current_price: 7999.00,
+                        original_price: 8999.00,
+                        desire_level: 5
+                    })
+                });
+                const data = await response.json();
+                showResult('backend-result', JSON.stringify(data, null, 2), data.success ? 'success' : 'error');
+            } catch (error) {
+                showResult('backend-result', `错误: ${error.message}`, 'error');
+            }
+        }
+
+        // 测试获取商品
+        async function testGetProducts() {
+            try {
+                showResult('backend-result', '正在获取商品列表...', 'info');
+                const response = await fetch(`${API_BASE}/products`);
+                const data = await response.json();
+                showResult('backend-result', JSON.stringify(data, null, 2), 'success');
+            } catch (error) {
+                showResult('backend-result', `错误: ${error.message}`, 'error');
+            }
+        }
+
+        // 测试手动抓取
+        async function testScrape() {
+            try {
+                showResult('backend-result', '正在触发抓取任务...', 'info');
+                const response = await fetch(`${API_BASE}/scrape/jd`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                showResult('backend-result', JSON.stringify(data, null, 2), data.success ? 'success' : 'error');
+            } catch (error) {
+                showResult('backend-result', `错误: ${error.message}`, 'error');
+            }
+        }
+
+        // 打开弹窗
+        function openPopup() {
+            // 在实际扩展中，这会打开 popup.html
+            // 这里我们直接打开测试页面
+            window.open('popup.html', 'popup', 'width=400,height=600');
+        }
+
+        // 加载测试数据
+        async function loadTestData() {
+            try {
+                showResult('test-data-result', '正在加载测试数据...', 'info');
+                
+                const testProducts = [
+                    {
+                        platform: 'jd',
+                        product_id: '100012345678',
+                        title: 'iPhone 15 Pro 256GB',
+                        url: 'https://item.jd.com/100012345678.html',
+                        current_price: 7999.00,
+                        original_price: 8999.00,
+                        desire_level: 5
+                    },
+                    {
+                        platform: 'taobao',
+                        product_id: '987654321',
+                        title: '冬季羽绒服男',
+                        url: 'https://item.taobao.com/item.htm?id=987654321',
+                        current_price: 499.00,
+                        original_price: 899.00,
+                        desire_level: 4
+                    },
+                    {
+                        platform: 'pdd',
+                        product_id: '123456789',
+                        title: 'AirPods Pro 2',
+                        url: 'https://mobile.yangkeduo.com/goods.html?goods_id=123456789',
+                        current_price: 1599.00,
+                        original_price: 1999.00,
+                        desire_level: 3
+                    }
+                ];
+
+                let successCount = 0;
+                for (const product of testProducts) {
+                    const response = await fetch(`${API_BASE}/products`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(product)
+                    });
+                    const data = await response.json();
+                    if (data.success) successCount++;
+                }
+
+                showResult('test-data-result', `✅ 成功添加 ${successCount}/${testProducts.length} 个测试商品`, 'success');
+            } catch (error) {
+                showResult('test-data-result', `错误: ${error.message}`, 'error');
+            }
+        }
+
+        // 清除测试数据
+        async function clearTestData() {
+            try {
+                showResult('test-data-result', '正在清除测试数据...', 'info');
+                
+                const response = await fetch(`${API_BASE}/products`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    let deleteCount = 0;
+                    for (const product of data.data) {
+                        await fetch(`${API_BASE}/products/${product.id}`, {
+                            method: 'DELETE'
+                        });
+                        deleteCount++;
+                    }
+                    showResult('test-data-result', `✅ 成功删除 ${deleteCount} 个商品`, 'success');
+                }
+            } catch (error) {
+                showResult('test-data-result', `错误: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

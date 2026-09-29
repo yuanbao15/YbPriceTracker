@@ -1,0 +1,71 @@
+{
+    "manifest_version": 3,
+    "name": "YbPriceTracker - 电商价格追踪助手",
+    "version": "1.0.0",
+    "description": "智能追踪京东、淘宝、拼多多商品价格，帮你以最优价格购买心仪商品",
+    "permissions": [
+        "activeTab",
+        "storage",
+        "alarms",
+        "notifications",
+        "contextMenus",
+        "tabs",
+        "windows",
+        "scripting"
+    ],
+    "host_permissions": [
+        "https://*.jd.com/*",
+        "https://*.taobao.com/*",
+        "https://*.tmall.com/*",
+        "https://*.pinduoduo.com/*",
+        "https://*.pdd.com/*",
+        "https://*.manmanbuy.com/*",
+        "http://localhost:3777/*"
+    ],
+    "background": {
+        "service_worker": "background/background.js",
+        "type": "module"
+    },
+    "action": {
+        "default_popup": "popup/popup.html",
+        "default_icon": {
+            "16": "icons/icon16.png",
+            "48": "icons/icon48.png",
+            "128": "icons/icon128.png"
+        }
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://*.jd.com/*",
+                "https://*.taobao.com/*",
+                "https://*.tmall.com/*",
+                "https://*.pinduoduo.com/*",
+                "https://*.pdd.com/*"
+            ],
+            "js": ["content/content.js"],
+            "css": ["content/content.css"],
+            "run_at": "document_end"
+        },
+        {
+            "matches": [
+                "https://tool.manmanbuy.com/*",
+                "https://*.manmanbuy.com/*"
+            ],
+            "js": ["content/manmanbuy.js"],
+            "run_at": "document_end"
+        }
+    ],
+    "options_page": "options/options.html",
+    "icons": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    },
+    "web_accessible_resources": [
+        {
+            "resources": ["icons/icon16.png", "icons/icon48.png", "icons/icon128.png"],
+            "matches": ["<all_urls>"]
+        }
+    ]
+}

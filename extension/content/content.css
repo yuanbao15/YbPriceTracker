@@ -1,0 +1,138 @@
+/* YbPriceTracker 内容脚本样式 */
+
+/* 追踪按钮 */
+#ybprice-tracker-btn {
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    z-index: 99999 !important;
+}
+
+#ybprice-tracker-btn button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    border: none !important;
+    padding: 12px 20px !important;
+    border-radius: 25px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4) !important;
+    transition: all 0.3s ease !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Microsoft YaHei", sans-serif !important;
+}
+
+#ybprice-tracker-btn button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6) !important;
+}
+
+/* 价格徽章 */
+#ybprice-badge {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    z-index: 99998 !important;
+    background: white !important;
+    border-radius: 12px !important;
+    padding: 15px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Microsoft YaHei", sans-serif !important;
+    min-width: 200px !important;
+    transition: opacity 0.3s ease !important;
+}
+
+#ybprice-badge:hover {
+    opacity: 1 !important;
+}
+
+/* 通知样式 */
+.ybprice-notification {
+    position: fixed !important;
+    top: 20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 999999 !important;
+    background: white !important;
+    border-radius: 8px !important;
+    padding: 15px 20px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Microsoft YaHei", sans-serif !important;
+    animation: ybprice-slideDown 0.3s ease !important;
+}
+
+@keyframes ybprice-slideDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes ybprice-slideUp {
+    from {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+}
+
+/* 价格高亮样式 */
+.ybprice-highlight {
+    background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%) !important;
+    border-left: 3px solid #667eea !important;
+    padding-left: 8px !important;
+}
+
+/* 趋势指示器 */
+.ybprice-trend-indicator {
+    display: inline-block !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    margin-left: 8px !important;
+}
+
+.ybprice-trend-lowest {
+    background: #e6f9e6 !important;
+    color: #52c41a !important;
+}
+
+.ybprice-trend-good {
+    background: #e6f9e6 !important;
+    color: #52c41a !important;
+}
+
+.ybprice-trend-below {
+    background: #fff7e6 !important;
+    color: #faad14 !important;
+}
+
+.ybprice-trend-above {
+    background: #fff1e6 !important;
+    color: #fa8c16 !important;
+}
+
+.ybprice-trend-high {
+    background: #ffe8e8 !important;
+    color: #ff4d4f !important;
+}
+
+/* 隐藏某些元素以避免干扰 */
+#ybprice-tracker-btn,
+#ybprice-badge {
+    pointer-events: auto !important;
+}
+
+/* 确保不会被页面样式覆盖 */
+#ybprice-tracker-btn *,
+#ybprice-badge * {
+    box-sizing: border-box !important;
+}

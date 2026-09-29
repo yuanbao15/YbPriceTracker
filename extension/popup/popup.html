@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YbPriceTracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 400px;
+            height: 580px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+            background: #f5f6fa;
+            color: #333;
+        }
+
+        /* 顶部头部：紧凑 */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .header-left h1 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .header-left p {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .header-icon-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-icon-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .stats-compact {
+            display: flex;
+            gap: 12px;
+        }
+
+        .stat-compact-item {
+            text-align: center;
+        }
+
+        .stat-compact-value {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .stat-compact-label {
+            font-size: 10px;
+            opacity: 0.85;
+            margin-top: 1px;
+        }
+
+        /* 通知条（有降价时显示） */
+        .price-drop-alert {
+            background: linear-gradient(90deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            padding: 6px 16px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        /* 标签页 */
+        .tabs {
+            display: flex;
+            background: white;
+            border-bottom: 1px solid #eee;
+            flex-shrink: 0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 11px 8px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 13px;
+            color: #888;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            font-weight: 600;
+            border-bottom-color: #667eea;
+        }
+
+        /* 排序栏（按页签显示不同按钮） */
+        .sort-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 5px 12px;
+            background: #fafbfe;
+            border-bottom: 1px solid #f0f0f0;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .sort-label {
+            font-size: 11px;
+            color: #999;
+            margin-right: auto;
+        }
+
+        .sort-chip {
+            padding: 3px 10px;
+            font-size: 11px;
+            color: #667eea;
+            background: #eef2ff;
+            border: 1px solid #d6dfff;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .sort-chip:hover {
+            background: #dbe4ff;
+        }
+
+        .sort-chip.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            font-weight: 600;
+        }
+
+        .sort-chip.drops-chip {
+            color: #ff4d4f;
+            background: #fff0f0;
+            border-color: #ffd6d6;
+        }
+
+        .sort-chip.drops-chip:hover {
+            background: #ffe0e0;
+        }
+
+        .sort-chip.drops-chip.active {
+            background: #ff4d4f;
+            color: white;
+            border-color: #ff4d4f;
+        }
+
+        /* 平台筛选栏 */
+        .platform-row {
+            display: flex;
+            align-items: center;
+            padding: 5px 12px;
+            background: #fafbfe;
+            border-bottom: 1px solid #f0f0f0;
+            gap: 6px;
+            flex-shrink: 0;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .platform-row::-webkit-scrollbar {
+            display: none;
+        }
+
+        .platform-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 3px 9px;
+            font-size: 11px;
+            color: #666;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+            user-select: none;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .platform-chip:hover {
+            background: #f5f5f5;
+        }
+
+        .platform-chip.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            font-weight: 600;
+        }
+
+        .platform-chip.active svg rect {
+            opacity: 0.7;
+        }
+
+        .platform-chip.group-toggle {
+            margin-left: auto;
+        }
+
+        .platform-chip.group-toggle.active {
+            background: #722ed1;
+            border-color: #722ed1;
+        }
+
+        /* 平台分组 */
+        .platform-group {
+            margin-bottom: 4px;
+        }
+
+        .platform-group-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 6px 6px;
+        }
+
+        .platform-group-icon {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .platform-group-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #444;
+        }
+
+        .platform-group-count {
+            margin-left: auto;
+            font-size: 11px;
+            color: #888;
+            background: #f0f2f5;
+            padding: 1px 8px;
+            border-radius: 10px;
+        }
+
+        .platform-group-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* 内容区（唯一滚动区） */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 6px 10px;
+        }
+
+        .content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .content::-webkit-scrollbar-thumb {
+            background: #d0d0d0;
+            border-radius: 3px;
+        }
+
+        .content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .product-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        /* 商品卡片：紧凑横向布局（左图右信息） */
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f0f0f0;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .product-thumb {
+            width: 56px;
+            height: 56px;
+            object-fit: cover;
+            border-radius: 6px;
+            flex-shrink: 0;
+            border: 1px solid #f0f0f0;
+            background: #fafafa;
+        }
+
+        .product-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2px;
+            gap: 6px;
+        }
+
+        .product-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: #333;
+            flex: 1;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .platform-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            font-size: 9px;
+            padding: 1px 5px 1px 3px;
+            border-radius: 8px;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+
+        .platform-badge svg {
+            display: block;
+        }
+
+        .platform-jd {
+            background: #fee;
+            color: #e4393c;
+        }
+
+        .platform-taobao {
+            background: #fff4e6;
+            color: #ff6a00;
+        }
+
+        .platform-pdd {
+            background: #ffe8e8;
+            color: #e02e24;
+        }
+
+        .product-meta {
+            display: flex;
+            align-items: baseline;
+            gap: 0;
+            margin-bottom: 2px;
+            font-size: 10px;
+            line-height: 1.5;
+            flex-wrap: nowrap;
+            overflow: hidden;
+        }
+
+        /* 制表符分隔符：细竖线 */
+        .meta-divider {
+            display: inline-block;
+            width: 1px;
+            height: 10px;
+            background: #e5e5e5;
+            margin: 0 6px;
+            align-self: center;
+            flex-shrink: 0;
+        }
+
+        /* 价格行（旧）保留类名兼容 */
+        .product-price-row {
+            display: none;
+        }
+
+        .current-price {
+            font-size: 13px;
+            font-weight: 700;
+            color: #e4393c;
+            margin-right: 3px;
+        }
+
+        .original-price {
+            font-size: 9px;
+            color: #ccc;
+            text-decoration: line-through;
+            margin-right: 3px;
+        }
+
+        .price-trend {
+            font-size: 9px;
+            padding: 0 3px;
+            border-radius: 3px;
+            line-height: 1.4;
+            margin-right: 3px;
+        }
+
+        /* 价格行 */
+        .product-price-row {
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-bottom: 2px;
+        }
+
+        .trend-lowest, .trend-good {
+            background: #e6f9e6;
+            color: #52c41a;
+        }
+
+        .trend-below {
+            background: #fff7e6;
+            color: #faad14;
+        }
+
+        .trend-above {
+            background: #fff1e6;
+            color: #fa8c16;
+        }
+
+        .trend-high {
+            background: #ffe8e8;
+            color: #ff4d4f;
+        }
+
+        .trend-none {
+            background: #f5f5f5;
+            color: #999;
+        }
+
+        .initial-price {
+            font-size: 9px;
+            color: #999;
+            background: #f5f5f5;
+            padding: 0 4px;
+            border-radius: 3px;
+            margin-right: 3px;
+        }
+
+        .target-price {
+            font-size: 10px;
+            color: #722ed1;
+            background: #f9f0ff;
+            padding: 0 5px;
+            border-radius: 3px;
+            margin-right: 3px;
+            cursor: pointer;
+        }
+
+        .target-price:hover {
+            background: #efdbff;
+        }
+
+        /* 降幅百分比（内联在 meta 行） */
+        .drop-percent {
+            color: #ff4d4f;
+            font-size: 10px;
+            font-weight: 700;
+            margin: 0 3px;
+        }
+
+        .drop-amount {
+            color: #52c41a;
+            font-size: 9px;
+            font-weight: 500;
+            margin: 0 3px;
+        }
+
+        /* 趋势说明 */
+        .trend-msg {
+            font-size: 10px;
+            color: #999;
+            margin-top: 1px;
+            line-height: 1.4;
+        }
+
+        .trend-msg.no-data {
+            color: #ccc;
+            font-style: italic;
+        }
+
+        /* 访问商品页面按钮 */
+        .btn-open-source {
+            margin-left: 3px;
+            width: 16px;
+            height: 16px;
+            border: none;
+            border-radius: 4px;
+            background: #eef2ff;
+            color: #667eea;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            line-height: 1;
+            align-self: center;
+        }
+
+        .btn-open-source:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* 意向星级（滑轨式拖拽） */
+        .desire-stars {
+            color: #ffd700;
+            font-size: 11px;
+            letter-spacing: 1px;
+            cursor: ew-resize;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            padding: 0 2px;
+            border-radius: 3px;
+            transition: background 0.15s;
+            touch-action: none;
+        }
+
+        .desire-stars:hover {
+            background: #fff8dc;
+        }
+
+        .desire-stars.dragging {
+            background: #fff3c0;
+            cursor: grabbing;
+        }
+
+        /* 操作按钮 */
+        .product-actions {
+            display: flex;
+            gap: 4px;
+            margin-top: 3px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 3px 4px;
+            border: none;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: #f0f2f5;
+            color: #555;
+            white-space: nowrap;
+            line-height: 1.4;
+        }
+
+        .btn:hover {
+            background: #e2e6ec;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd6;
+        }
+
+        .btn-success {
+            background: #52c41a;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #46a50f;
+        }
+
+        .btn-danger {
+            background: #fff;
+            color: #ff4d4f;
+            border: 1px solid #ffd6d6;
+        }
+
+        .btn-danger:hover {
+            background: #fff5f5;
+        }
+
+        .product-added-time {
+            font-size: 9px;
+            color: #ccc;
+            margin-left: auto;
+            padding-left: 6px;
+            flex-shrink: 0;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #aaa;
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+            white-space: pre-line;
+            line-height: 1.6;
+        }
+
+        /* 底部固定操作栏 */
+        .footer {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 8px 10px 6px;
+            background: white;
+            border-top: 1px solid #eee;
+            flex-shrink: 0;
+        }
+
+        .footer-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .footer-btn {
+            flex: 1;
+            padding: 9px 8px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            color: white;
+        }
+
+        .footer-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .footer-btn-add {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .footer-btn-add:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.35);
+        }
+
+        .footer-btn-refresh {
+            background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
+        }
+
+        .footer-btn-refresh:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(82, 196, 26, 0.35);
+        }
+
+        /* 底部状态条 */
+        .status-bar {
+            font-size: 11px;
+            text-align: center;
+            color: #888;
+            height: 14px;
+            line-height: 14px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            z-index: 99999;
+            color: white;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
+            transition: opacity 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h1>🛒 YbPriceTracker</h1>
+            <p>电商价格追踪助手</p>
+        </div>
+        <div class="stats-compact">
+            <div class="stat-compact-item">
+                <div class="stat-compact-value" id="total-count">0</div>
+                <div class="stat-compact-label">追踪</div>
+            </div>
+            <div class="stat-compact-item">
+                <div class="stat-compact-value" id="watching-count">0</div>
+                <div class="stat-compact-label">监控</div>
+            </div>
+            <div class="stat-compact-item">
+                <div class="stat-compact-value" id="drops-count">0</div>
+                <div class="stat-compact-label">降价</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="price-drop-alert" class="price-drop-alert" style="display: none;">
+        <span>🔔</span>
+        <span id="alert-text"></span>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="watching">监控中</div>
+        <div class="tab" data-tab="bought">已购买</div>
+        <div class="tab" data-tab="drops">价格下降</div>
+    </div>
+
+    <!-- 排序栏：按页签显示不同排序方式 -->
+    <div class="sort-row" id="sort-row">
+        <span class="sort-label" id="sort-label">排序：</span>
+        <!-- 监控中/已购买页签：按添加时间 / 按购买意向 -->
+        <div id="sort-normal" style="display: none; gap: 6px;">
+            <span class="sort-chip active" id="sort-time" data-sort="created_at">🕐 添加时间↓</span>
+            <span class="sort-chip" id="sort-desire" data-sort="desire_level">⭐ 意向↓</span>
+        </div>
+        <!-- 价格下降页签：按降幅排序 -->
+        <div id="sort-drops" style="display: none; gap: 6px;">
+            <span class="sort-chip drops-chip active" id="sort-drop" data-sort="drop">📉 降幅↓</span>
+        </div>
+    </div>
+
+    <!-- 平台筛选栏：全部 / 京东 / 淘宝 / 拼多多 / 分组展示 -->
+    <div class="platform-row" id="platform-row">
+        <span class="platform-chip active" data-platform="all">全部</span>
+        <span class="platform-chip platform-jd" data-platform="jd">
+            <svg width="12" height="12" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="4" fill="#e4393c"/><text x="12" y="17" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">京</text></svg>京东
+        </span>
+        <span class="platform-chip platform-taobao" data-platform="taobao">
+            <svg width="12" height="12" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="4" fill="#ff6a00"/><text x="12" y="17" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">淘</text></svg>淘宝
+        </span>
+        <span class="platform-chip platform-pdd" data-platform="pdd">
+            <svg width="12" height="12" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="4" fill="#e02e24"/><text x="12" y="17" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">拼</text></svg>拼多多
+        </span>
+        <span class="platform-chip group-toggle" id="group-toggle" title="按平台分组展示">📁 分组</span>
+    </div>
+
+    <div class="content">
+        <div id="product-list" class="product-list"></div>
+    </div>
+
+    <div class="footer">
+        <div class="footer-btns">
+            <button class="footer-btn footer-btn-add" id="add-product-btn">＋ 添加当前页面商品</button>
+            <button class="footer-btn footer-btn-refresh" id="refresh-prices-btn">🔄 刷新所有价格</button>
+        </div>
+        <div id="update-status" class="status-bar"></div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

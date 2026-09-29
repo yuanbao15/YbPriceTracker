@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YbPriceTracker - 价格历史</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Chart.js CDN 兜底：若主源加载失败，动态注入备用源
+        window.addEventListener('load', function() {
+            if (typeof Chart === 'undefined') {
+                var s = document.createElement('script');
+                s.src = 'https://cdn.bootcdn.net/ajax/libs/Chart.js/4.4.0/chart.umd.min.js';
+                s.onload = function() { if (typeof loadPriceHistory === 'function') loadPriceHistory(); };
+                document.head.appendChild(s);
+            }
+        });
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .product-info {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .product-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .price-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .price-item {
+            text-align: center;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .price-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .price-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #e4393c;
+        }
+
+        .price-value.lowest {
+            color: #52c41a;
+        }
+
+        .price-value.highest {
+            color: #ff4d4f;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+
+        .controls {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .control-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .control-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .history-table {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .table-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f9f9f9;
+            font-weight: 600;
+            color: #333;
+        }
+
+        td {
+            color: #666;
+        }
+
+        .price-change {
+            font-weight: 500;
+        }
+
+        .price-change.up {
+            color: #ff4d4f;
+        }
+
+        .price-change.down {
+            color: #52c41a;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #ff4d4f;
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #5a6fd6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="javascript:window.close()" class="back-btn">← 返回</a>
+        
+        <div class="header">
+            <h1>📊 价格历史追踪</h1>
+            <p id="product-title">商品名称</p>
+        </div>
+
+        <div class="product-info">
+            <div class="price-summary">
+                <div class="price-item">
+                    <div class="price-label">当前价格</div>
+                    <div class="price-value" id="current-price">--</div>
+                </div>
+                <div class="price-item">
+                    <div class="price-label">历史最低</div>
+                    <div class="price-value lowest" id="lowest-price">--</div>
+                </div>
+                <div class="price-item">
+                    <div class="price-label">历史最高</div>
+                    <div class="price-value highest" id="highest-price">--</div>
+                </div>
+                <div class="price-item">
+                    <div class="price-label">30天均价</div>
+                    <div class="price-value" id="avg-price">--</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <span class="control-label">时间范围：</span>
+                <button class="control-btn" data-days="7">7天</button>
+                <button class="control-btn active" data-days="30">30天</button>
+                <button class="control-btn" data-days="90">90天</button>
+                <button class="control-btn" data-days="180">180天</button>
+                <button class="control-btn" data-days="365">1年</button>
+                <a id="mmb-link" href="#" target="_blank" class="control-btn" style="display:none;text-decoration:none; background:#fff4e6; border-color:#ff6a00; color:#ff6a00;">📊 慢慢买完整走势</a>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">价格走势图</div>
+            <div class="chart-wrapper">
+                <canvas id="priceChart"></canvas>
+            </div>
+        </div>
+
+        <div class="history-table">
+            <div class="table-title">价格记录</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>价格</th>
+                        <th>原价</th>
+                        <th>变动</th>
+                        <th>优惠券</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body">
+                    <!-- 数据将在这里动态生成 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // API 基础地址
+        const API_BASE = 'http://localhost:3777/api';
+        
+        // 从URL参数获取商品信息
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('productId');
+        const productTitle = urlParams.get('title') || '商品';
+        const productUrl = urlParams.get('url') || '';
+        
+        // 当前选择的天数（默认 30 天，与默认激活按钮一致）
+        let currentDays = 30;
+        
+        // 图表实例
+        let priceChart = null;
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 设置标题
+            document.getElementById('product-title').textContent = decodeURIComponent(productTitle);
+            
+            // 设置慢慢买链接
+            const mmbLink = document.getElementById('mmb-link');
+            if (mmbLink && productUrl) {
+                mmbLink.href = `https://tool.manmanbuy.com/HistoryLowest.aspx?url=${encodeURIComponent(productUrl)}`;
+                mmbLink.style.display = '';
+            }
+            
+            // 绑定时间范围按钮事件
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentDays = parseInt(btn.dataset.days);
+                    loadPriceHistory();
+                });
+            });
+            
+            // 加载数据（等 Chart.js 就绪后）
+            waitForChart().then(() => loadPriceHistory());
+        });
+
+        // 等待 Chart.js 加载完成（CDN 可能延迟）
+        function waitForChart(maxWait) {
+            return new Promise((resolve) => {
+                if (typeof Chart !== 'undefined') { resolve(); return; }
+                const start = Date.now();
+                const timer = setInterval(() => {
+                    if (typeof Chart !== 'undefined' || Date.now() - start > (maxWait || 10000)) {
+                        clearInterval(timer);
+                        resolve();
+                    }
+                }, 200);
+            });
+        }
+        
+        // 加载价格历史
+        async function loadPriceHistory() {
+            try {
+                // 显示加载状态
+                document.getElementById('history-table-body').innerHTML = 
+                    '<tr><td colspan="5" class="loading">加载中...</td></tr>';
+                
+                // 获取价格历史
+                const response = await fetch(`${API_BASE}/prices/${productId}/history?days=${currentDays}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const { history, stats } = data.data;
+                    
+                    // 更新价格摘要
+                    updatePriceSummary(stats, history);
+                    
+                    // 绘制图表
+                    renderChart(history);
+                    
+                    // 渲染表格
+                    renderTable(history);
+                } else {
+                    showError('加载失败: ' + (data.error || '未知错误'));
+                }
+            } catch (error) {
+                console.error('加载价格历史失败:', error);
+                showError('无法连接到后端服务');
+            }
+        }
+        
+        // 更新价格摘要
+        function updatePriceSummary(stats, history) {
+            if (!stats) return;
+            
+            // 当前价格 = 最新一条历史记录的价格（history 按 recorded_at ASC 排序，最后一条是最新）
+            let currentPrice = null;
+            if (history && history.length > 0) {
+                const last = history[history.length - 1];
+                currentPrice = parseFloat(last.price);
+            }
+            document.getElementById('current-price').textContent = 
+                currentPrice ? `¥${currentPrice.toFixed(2)}` : '--';
+            document.getElementById('lowest-price').textContent = 
+                stats.min_price ? `¥${parseFloat(stats.min_price).toFixed(2)}` : '--';
+            document.getElementById('highest-price').textContent = 
+                stats.max_price ? `¥${parseFloat(stats.max_price).toFixed(2)}` : '--';
+            document.getElementById('avg-price').textContent = 
+                stats.avg_price ? `¥${parseFloat(stats.avg_price).toFixed(2)}` : '--';
+        }
+        
+        // 渲染图表
+        function renderChart(history) {
+            // 无数据时显示空状态提示
+            if (!history || history.length === 0) {
+                const mmbLink = productUrl 
+                    ? `<a href="https://tool.manmanbuy.com/HistoryLowest.aspx?url=${encodeURIComponent(productUrl)}" target="_blank" style="color:#667eea;">打开慢慢买回传历史数据</a>`
+                    : '';
+                document.getElementById('priceChart').parentElement.innerHTML = 
+                    `<div style="text-align:center;padding:60px 20px;color:#999;">
+                        <div style="font-size:48px;margin-bottom:12px;">📉</div>
+                        <div style="font-size:16px;margin-bottom:8px;">暂无价格历史数据</div>
+                        <div style="font-size:13px;line-height:1.6;">
+                            点击「刷新所有价格」可采集当前价格<br>
+                            ${mmbLink ? '或' + mmbLink + '（自动回传到本地）<br>' : ''}
+                            持续使用后曲线会逐渐丰满
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            // Chart.js 未加载时，显示数据点摘要而不画图
+            if (typeof Chart === 'undefined') {
+                document.getElementById('priceChart').parentElement.innerHTML = 
+                    `<div style="text-align:center;padding:40px 20px;color:#666;">
+                        <div style="font-size:14px;margin-bottom:8px;">📊 共 ${history.length} 条价格记录</div>
+                        <div style="font-size:13px;color:#999;">Chart.js 组件加载失败，但下方表格可正常查看数据</div>
+                    </div>`;
+                return;
+            }
+
+            try {
+                const ctx = document.getElementById('priceChart').getContext('2d');
+                
+                // 如果已有图表，先销毁
+                if (priceChart) {
+                    priceChart.destroy();
+                }
+                
+                // 准备数据
+            const labels = history.map(item => {
+                const date = new Date(item.recorded_at);
+                return date.toLocaleDateString('zh-CN', { 
+                    month: 'numeric', 
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric'
+                });
+            });
+            
+            const prices = history.map(item => parseFloat(item.price));
+            
+            // 创建图表
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '价格',
+                        data: prices,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: {
+                                size: 14
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            callbacks: {
+                                label: function(context) {
+                                    return `价格: ¥${context.parsed.y.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                maxTicksLimit: 10,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        y: {
+                            display: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '¥' + value;
+                                },
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+            } catch (e) {
+                console.error('绘制图表失败:', e);
+                document.getElementById('priceChart').parentElement.innerHTML = 
+                    `<div style="text-align:center;padding:40px 20px;color:#666;">
+                        <div style="font-size:14px;margin-bottom:8px;">📊 共 ${history.length} 条价格记录</div>
+                        <div style="font-size:13px;color:#999;">图表绘制失败：${e.message}<br>请查看下方表格数据</div>
+                    </div>`;
+            }
+        }
+        
+        // 渲染表格
+        function renderTable(history) {
+            const tbody = document.getElementById('history-table-body');
+            
+            if (history.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="loading">暂无价格记录</td></tr>';
+                return;
+            }
+            
+            // 反转顺序，最新的在前面
+            const reversedHistory = [...history].reverse();
+            
+            let html = '';
+            let prevPrice = null;
+            
+            reversedHistory.forEach((item, index) => {
+                const date = new Date(item.recorded_at);
+                const formattedDate = date.toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                const price = parseFloat(item.price);
+                const originalPrice = item.original_price ? parseFloat(item.original_price) : null;
+                
+                // 计算价格变动
+                let priceChange = '';
+                let changeClass = '';
+                if (prevPrice !== null) {
+                    const change = price - prevPrice;
+                    if (change > 0) {
+                        priceChange = `+${change.toFixed(2)}`;
+                        changeClass = 'up';
+                    } else if (change < 0) {
+                        priceChange = change.toFixed(2);
+                        changeClass = 'down';
+                    } else {
+                        priceChange = '0.00';
+                    }
+                }
+                
+                // 优惠券信息
+                let couponInfo = '-';
+                if (item.coupon_info) {
+                    try {
+                        const coupons = JSON.parse(item.coupon_info);
+                        if (Array.isArray(coupons) && coupons.length > 0) {
+                            couponInfo = coupons.map(c => c.text || `满${c.min_amount}减${c.discount_amount}`).join(', ');
+                        }
+                    } catch (e) {
+                        // 忽略解析错误
+                    }
+                }
+                
+                html += `
+                    <tr>
+                        <td>${formattedDate}</td>
+                        <td>¥${price.toFixed(2)}</td>
+                        <td>${originalPrice ? `¥${originalPrice.toFixed(2)}` : '-'}</td>
+                        <td class="price-change ${changeClass}">${priceChange || '-'}</td>
+                        <td>${couponInfo}</td>
+                    </tr>
+                `;
+                
+                prevPrice = price;
+            });
+            
+            tbody.innerHTML = html;
+        }
+        
+        // 显示错误
+        function showError(message) {
+            document.getElementById('history-table-body').innerHTML = 
+                `<tr><td colspan="5" class="error">${message}</td></tr>`;
+        }
+    </script>
+</body>
+</html>

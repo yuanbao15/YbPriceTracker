@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YbPriceTracker 设置</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 24px;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group .hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-danger {
+            background: #ff4d4f;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ff7875;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #e6f9e6;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }
+
+        .alert-error {
+            background: #ffe8e8;
+            color: #ff4d4f;
+            border: 1px solid #ffa8a8;
+        }
+
+        .alert-info {
+            background: #e8f4fd;
+            color: #1890ff;
+            border: 1px solid #91d5ff;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-connected {
+            background: #52c41a;
+        }
+
+        .status-disconnected {
+            background: #ff4d4f;
+        }
+
+        .status-checking {
+            background: #faad14;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+
+        .connection-status span {
+            font-size: 14px;
+        }
+
+        .test-btn {
+            margin-left: auto;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ YbPriceTracker 设置</h1>
+            <p>配置你的电商价格追踪助手</p>
+        </div>
+
+        <div class="content">
+            <div id="alert-container"></div>
+
+            <div class="section">
+                <h2 class="section-title">🔗 后端服务连接</h2>
+                
+                <div class="connection-status">
+                    <span class="status-indicator status-checking" id="status-indicator"></span>
+                    <span id="connection-status-text">检查连接中...</span>
+                    <button class="btn btn-secondary test-btn" id="test-connection">测试连接</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="api-url">API 地址</label>
+                    <input type="text" id="api-url" placeholder="http://localhost:3777">
+                    <div class="hint">本地服务地址，默认 http://localhost:3777</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">⏰ 定时任务配置</h2>
+                
+                <div class="form-group">
+                    <label for="jd-cron">京东抓取时间</label>
+                    <input type="text" id="jd-cron" placeholder="0 0,6,12,18,22 * * *">
+                    <div class="hint">Cron 表达式，默认每天 0点、6点、12点、18点、22点</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="taobao-cron">淘宝抓取时间</label>
+                    <input type="text" id="taobao-cron" placeholder="0 10 * * *">
+                    <div class="hint">Cron 表达式，默认每天 10点</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="pdd-cron">拼多多抓取时间</label>
+                    <input type="text" id="pdd-cron" placeholder="0 9,21 * * *">
+                    <div class="hint">Cron 表达式，默认每天 9点、21点</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">🔔 价格提醒</h2>
+                
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="enable-notifications" checked>
+                        <label for="enable-notifications">启用价格下降通知</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="price-threshold">价格下降提醒阈值 (%)</label>
+                    <input type="number" id="price-threshold" value="5" min="1" max="50">
+                    <div class="hint">当价格下降超过此百分比时发送通知</div>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="enable-sound" checked>
+                        <label for="enable-sound">启用通知声音</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">📊 显示设置</h2>
+                
+                <div class="form-group">
+                    <label for="default-sort">默认排序方式</label>
+                    <select id="default-sort">
+                        <option value="desire_level">意向等级</option>
+                        <option value="price_asc">价格从低到高</option>
+                        <option value="price_desc">价格从高到低</option>
+                        <option value="updated_at">最近更新</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="default-view">默认视图</label>
+                    <select id="default-view">
+                        <option value="watching">监控中</option>
+                        <option value="all">全部</option>
+                        <option value="drops">价格下降</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="show-badge" checked>
+                        <label for="show-badge">在商品页面显示价格徽章</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">🗄️ 数据管理</h2>
+                
+                <div class="form-group">
+                    <label>数据保留时间</label>
+                    <select id="data-retention">
+                        <option value="30">30天</option>
+                        <option value="60">60天</option>
+                        <option value="90" selected>90天</option>
+                        <option value="180">180天</option>
+                        <option value="365">1年</option>
+                    </select>
+                    <div class="hint">自动清理超过此时间的历史价格数据</div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-secondary" id="export-data">导出数据</button>
+                    <button class="btn btn-danger" id="clear-data">清除所有数据</button>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" id="save-settings">保存设置</button>
+                <button class="btn btn-secondary" id="reset-settings">恢复默认</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="options.js"></script>
+</body>
+</html>
