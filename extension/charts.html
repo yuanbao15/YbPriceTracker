@@ -4,18 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YbPriceTracker - 价格历史</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        // Chart.js CDN 兜底：若主源加载失败，动态注入备用源
-        window.addEventListener('load', function() {
-            if (typeof Chart === 'undefined') {
-                var s = document.createElement('script');
-                s.src = 'https://cdn.bootcdn.net/ajax/libs/Chart.js/4.4.0/chart.umd.min.js';
-                s.onload = function() { if (typeof loadPriceHistory === 'function') loadPriceHistory(); };
-                document.head.appendChild(s);
-            }
-        });
-    </script>
+    <script src="chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
